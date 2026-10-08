@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated user profile with isolated planner settings.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this profile.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the user.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "identifier": {
+          "type": "string",
+          "description": "Email address or mobile number of the user.",
+          "minLength": 3,
+          "maxLength": 180
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": ["ownerId", "name", "identifier", "createdAt", "updatedAt"]
+    },
+    "PlannerWorkspace": {
+      "title": "PlannerWorkspace",
+      "description": "Isolated per-user planner state including tasks, payments, marriage planner, and custom labels.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "The UID of the user who owns this workspace.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code selected by the user.",
+          "enum": ["INR", "USD", "EUR", "GBP", "AED", "SGD"],
+          "minLength": 3,
+          "maxLength": 3
+        },
+        "theme": {
+          "type": "string",
+          "description": "UI theme preference.",
+          "enum": ["light", "dark"],
+          "minLength": 4,
+          "maxLength": 5
+        },
+        "payloadJson": {
+          "type": "string",
+          "description": "Serialized workspace state (tasks, categories, marriage events, expense items, custom labels).",
+          "minLength": 2,
+          "maxLength": 900000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when workspace was initialized."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when workspace was last saved."
+        }
+      },
+      "required": ["ownerId", "currency", "theme", "payloadJson", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user profile document keyed by user UID."
+    },
+    "/workspaces/{userId}": {
+      "schema": { "$ref": "#/entities/PlannerWorkspace" },
+      "description": "Isolated planner workspace document keyed by user UID."
+    }
+  }
+}

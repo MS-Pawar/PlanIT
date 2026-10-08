@@ -1,0 +1,6 @@
+{
+  "name": "PlanEase — Daily Planner & Marriage Expense Tracker",
+  "description": "Personal daily planner, task & payment tracker, and dedicated Engagement & Marriage Expense Planner with OTP authentication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

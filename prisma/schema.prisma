@@ -1,0 +1,172 @@
+// Prisma Schema for PlanEase (PostgreSQL / SQLite compatible)
+// Run `npx prisma migrate dev --name init` when deploying with Prisma.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Change to "postgresql" for production PostgreSQL deployments
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String?  @unique
+  mobile        String?  @unique
+  identifier    String   @unique
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  otpChallenges OtpChallenge[]
+  sessions      Session[]
+  tasks         Task[]
+  payments      PaymentRecord[]
+  marriagePlans MarriageEventPlan[]
+  guests        GuestEntry[]
+  vendors       VendorEntry[]
+  settings      UserSettings?
+}
+
+model OtpChallenge {
+  id           String   @id @default(cuid())
+  identifier   String
+  otpHash      String
+  salt         String
+  attempts     Int      @default(0)
+  maxAttempts  Int      @default(3)
+  expiresAt    DateTime
+  resendAfter  DateTime
+  consumed     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([identifier])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Task {
+  id                   String   @id @default(cuid())
+  userId               String
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title                String
+  description          String   @default("")
+  category             String   @default("Personal")
+  priority             String   @default("Medium") // High | Medium | Low
+  date                 String   // YYYY-MM-DD
+  startTime            String   @default("")
+  endTime              String   @default("")
+  location             String   @default("")
+  status               String   @default("Pending") // Pending | In Progress | Done | Postponed
+  tagsJson             String   @default("[]")
+  notes                String   @default("")
+  attachmentName       String   @default("")
+  recurrence           String   @default("None") // None | Daily | Weekly | Monthly | Custom
+  customRecurrenceDays Int      @default(0)
+  subtasksJson         String   @default("[]")
+  reminderAt           String   @default("")
+  emailReminder        Boolean  @default(false)
+  attendees            String   @default("")
+  contactPhone         String   @default("")
+  address              String   @default("")
+  payee                String   @default("")
+  amount               Float    @default(0)
+  paymentMode          String   @default("UPI")
+  isPaid               Boolean  @default(false)
+  sortOrder            Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([userId, date])
+}
+
+model PaymentRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payee       String
+  title       String
+  amount      Float
+  dueDate     String
+  paid        Boolean  @default(false)
+  paymentMode String   @default("UPI")
+  category    String   @default("Payment/Bill")
+  notes       String   @default("")
+  linkedTaskId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, dueDate])
+}
+
+model MarriageEventPlan {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventScope      String   // Engagement | Marriage
+  brideName       String   @default("")
+  groomName       String   @default("")
+  brideFamily     String   @default("")
+  groomFamily     String   @default("")
+  eventDates      String   @default("")
+  venue           String   @default("")
+  city            String   @default("")
+  guestCount      Int      @default(0)
+  totalBudget     Float    @default(0)
+  notes           String   @default("")
+  categoriesJson  String   @default("[]")
+  lineItemsJson   String   @default("[]")
+  updatedAt       DateTime @updatedAt
+
+  @@unique([userId, eventScope])
+}
+
+model GuestEntry {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventScope          String   @default("Both")
+  name                String
+  side                String   @default("Common") // Bride | Groom | Common
+  headcount           Int      @default(1)
+  phone               String   @default("")
+  city                String   @default("")
+  inviteSent          Boolean  @default(false)
+  rsvpStatus          String   @default("Pending") // Confirmed | Pending | Declined
+  accommodationNeeded Boolean  @default(false)
+  notes               String   @default("")
+}
+
+model VendorEntry {
+  id               String   @id @default(cuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name             String
+  category         String
+  contactPerson    String   @default("")
+  phone            String   @default("")
+  email            String   @default("")
+  address          String   @default("")
+  contractedAmount Float    @default(0)
+  notes            String   @default("")
+}
+
+model UserSettings {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currency         String   @default("INR")
+  theme            String   @default("light")
+  taskCategoriesJson String @default("[]")
+  customLabelsJson String   @default("{}")
+}
